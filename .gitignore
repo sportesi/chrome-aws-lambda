@@ -8,3 +8,4 @@ jspm_packages
 # Excluded directories
 .config
 .npm
+.bash_history

@@ -50,10 +50,10 @@ package:
 #  include:
 #    - include-me.js
 #    - include-me-dir/**
-exclude:
-  - .config/**
-  - .npm/**
-  - .bash_history
+  exclude:
+    - .config/**
+    - .npm/**
+    - .bash_history
 #    - exclude-me.js
 #    - exclude-me-dir/**
 

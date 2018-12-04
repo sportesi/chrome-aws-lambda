@@ -5,6 +5,7 @@
   "main": "handler.js",
   "dependencies": {
     "chrome-aws-lambda": "^1.10.1",
+    "fs-extra": "^7.0.1",
     "puppeteer-core": "^1.11.0"
   },
   "devDependencies": {},
