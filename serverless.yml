@@ -54,6 +54,7 @@ package:
     - .config/**
     - .npm/**
     - .bash_history
+    - ./*.pdf
 #    - exclude-me.js
 #    - exclude-me-dir/**
 
