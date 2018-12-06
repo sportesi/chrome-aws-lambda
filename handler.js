@@ -22,7 +22,7 @@ module.exports.handler = async (event, context) => {
 
     let jsonData = await s3.getObject(jsonFileS3Params).promise();
 
-    jsonData = JSON.parse(jsonData);
+    jsonData = JSON.parse(jsonData.Body.toString());
 
     // Traigo el html a traves del json
 
@@ -43,7 +43,7 @@ module.exports.handler = async (event, context) => {
 
     let page = await browser.newPage();
 
-    await page.goto(`data:text/html,${html}`, {
+    await page.goto(`data:text/html,${html.Body.toString()}`, {
       waitUntil: 'networkidle2'
     });
 
