@@ -2,33 +2,39 @@ const chromium = require('chrome-aws-lambda');
 const puppeteer = require('puppeteer-core');
 const AWS = require('aws-sdk');
 const fs = require('fs-extra');
+const { pdfSettings } = require('./src/pdfSettings');
+const uuid4 = require('uuid4');
 
-const footer_template = `
-    <div style='font-size: 8px; font-family: helvetica; width: 100%;'>
-        <div style='width: 75%; text-align: center; float: left;'>
-            <div style='width: 300px; text-align: center; float: right;'>
-                <span>Mis Expensas | Gobierno de la Ciudad | www.buenosaires.gob.ar</span>
-                <br>
-                <span>www.octopus.com.ar</span>
-            </div>
-        </div>
-        <div style='width: 25%; float: right; text-align: center;'>
-            <span>Página <span class='pageNumber'></span> de <span class="totalPages"></span></span>
-        </div>
-    </div>
-`;
-
-const header_template = `
-    <div style='transform: rotate(-90deg); font-family: helvetica; font-size: 7px; height: 500px; width: 520px;'>
-        Procesado por <b>OCTOPUS</b> - 0800-362-OCTO (6286)
-    </div>
-`;
-
-exports.handler = async (event, context) => {
+module.exports.handler = async (event, context) => {
   let result = null;
   let browser = null;
+  const s3 = new AWS.S3();
+  const jsonPath = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
 
   try {
+
+    // Traigo el json
+
+    const jsonFileS3Params = {
+      Bucket: process.env.BUCKET,
+      Key: jsonPath
+    };
+
+    let jsonData = await s3.getObject(jsonFileS3Params).promise();
+
+    jsonData = JSON.parse(jsonData);
+
+    // Traigo el html a traves del json
+
+    const htmlFileS3Params = {
+      Bucket: process.env.BUCKET,
+      Key: `pdfs/expense-json-to-generate/${jsonData.html_filename}`
+    };
+
+    let html = await s3.getObject(htmlFileS3Params).promise();
+
+    // Invoco el browser
+
     browser = await puppeteer.launch({
       args: chromium.args,
       executablePath: await chromium.executablePath,
@@ -37,40 +43,72 @@ exports.handler = async (event, context) => {
 
     let page = await browser.newPage();
 
-    const data = fs.readFileSync('1.5.expense.html').toString();
-
-    await page.goto(`data:text/html,${data}`, { waitUntil: 'networkidle2' });
-
-    await page.pdf({
-      path: '/tmp/expense.pdf',
-      format: 'A4',
-      printBackground: true,
-      displayHeaderFooter: true,
-      margin: {
-        top: '30px',
-        bottom: '60px',
-        right: '30px',
-        left: '30px',
-      },
-      headerTemplate: header_template,
-      footerTemplate: footer_template
+    await page.goto(`data:text/html,${html}`, {
+      waitUntil: 'networkidle2'
     });
 
-    result = await page.title();
+    // Creo el pdf
 
-    const s3 = new AWS.S3();
+    await page.pdf(pdfSettings);
 
-    let params = {
+    // Mato el browser
+
+    await browser.close();
+
+    // Pongo en el S3 el PDF con la ruta del JSON
+
+    let uploadedPdfParams = {
       Body: fs.readFileSync('/tmp/expense.pdf'),
-      Bucket: "app.octopus.dev",
-      Key: "expense.pdf"
+      Bucket: process.env.BUCKET,
+      Key: jsonData.pdf_path
     };
 
-    s3.putObject(params, (err) => {
-      if (err) {
-        throw err;
-      }
+    await s3.putObject(uploadedPdfParams).promise();
+
+    // Borro el json
+
+    await s3.deleteObject(jsonFileS3Params).promise();
+
+    // Borro el html
+
+    await s3.deleteObject(htmlFileS3Params).promise();
+
+    // Actualizo Dynamo
+
+    const dynamodb = new AWS.DynamoDB({
+      apiVersion: '2012-08-10',
+      region: 'us-west-2',
     });
+
+    let params = {
+      Item: {
+        "id": {
+          S: uuid4()
+        },
+        "expense": {
+          S: jsonData.expense,
+        },
+        "functional_unit_id": {
+          S: jsonData.functional_unit_id
+        },
+        "pdf_path": {
+          S: jsonData.pdf_path
+        },
+        "created_at": {
+          S: jsonData.created_at
+        },
+        "pdf_type": {
+          S: jsonData.pdf_type
+        },
+      },
+      TableName: process.env.TABLE_NAME
+    };
+
+    await dynamodb.putItem(params).promise();
+
+    result = jsonData.pdf_path;
+
+    // Fin de la funcion
 
   } catch (error) {
     return context.fail(error);
