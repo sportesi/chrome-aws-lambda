@@ -5,6 +5,10 @@ const fs = require('fs-extra');
 const { pdfSettings } = require('./src/pdfSettings');
 const uuid4 = require('uuid4');
 
+async function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports.handler = async (event, context) => {
   let result = null;
   let browser = null;
@@ -44,8 +48,14 @@ module.exports.handler = async (event, context) => {
     let page = await browser.newPage();
 
     await page.goto(`data:text/html,${html.Body.toString()}`, {
-      waitUntil: 'networkidle2'
+      waitUntil: 'networkidle0'
     });
+
+    await timeout(4000);
+
+    await page.evaluate(() => { window.scrollBy(0, window.innerHeight); });
+
+    await page.waitFor('*');
 
     // Creo el pdf
 
