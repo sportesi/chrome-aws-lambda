@@ -13,6 +13,7 @@ module.exports.handler = async (event, context) => {
   let result = null;
   let browser = null;
   const s3 = new AWS.S3();
+  const bucket = event.Records[0].s3.bucket.name // Con esto me traigo el bucket a donde tengo que dejar el pdf
   const jsonPath = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
 
   try {
@@ -20,7 +21,7 @@ module.exports.handler = async (event, context) => {
     // Traigo el json
 
     const jsonFileS3Params = {
-      Bucket: process.env.BUCKET,
+      Bucket: bucket,
       Key: jsonPath
     };
 
@@ -31,7 +32,7 @@ module.exports.handler = async (event, context) => {
     // Traigo el html a traves del json
 
     const htmlFileS3Params = {
-      Bucket: process.env.BUCKET,
+      Bucket: bucket,
       Key: `pdfs/expense-json-to-generate/${jsonData.html_filename}`
     };
 
@@ -69,7 +70,7 @@ module.exports.handler = async (event, context) => {
 
     let uploadedPdfParams = {
       Body: fs.readFileSync('/tmp/expense.pdf'),
-      Bucket: process.env.BUCKET,
+      Bucket: bucket,
       Key: jsonData.pdf_path
     };
 
@@ -111,7 +112,7 @@ module.exports.handler = async (event, context) => {
           S: jsonData.pdf_type
         },
       },
-      TableName: process.env.TABLE_NAME
+      TableName: JSON.parse(process.env.DDB)[bucket] // lo mando al tabla de ddb correspondiente
     };
 
     await dynamodb.putItem(params).promise();
