@@ -84,8 +84,8 @@ module.exports.handler = async (event, context) => {
 
     await s3.deleteObject(htmlFileS3Params).promise();
 
-    // Actualizo Dynamo
-
+    // Actualizo DynamoDB
+    
     const dynamodb = new AWS.DynamoDB({
       apiVersion: '2012-08-10',
       region: 'us-west-2',

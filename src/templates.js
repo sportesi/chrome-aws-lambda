@@ -8,7 +8,7 @@ module.exports.footerTemplate = `
             </div>
         </div>
         <div style='width: 25%; float: right; text-align: center;'>
-            <span>Página <span class='pageNumber'></span> de <span class="totalPages"></span></span>
+            &nbsp;
         </div>
     </div>
 `;
