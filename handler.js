@@ -84,8 +84,37 @@ module.exports.handler = async (event, context) => {
 
     await s3.deleteObject(htmlFileS3Params).promise();
 
+    // Llamo al lambda que va a mergear este pdf con el de account-status
+
+    const lambda = new AWS.Lambda({
+      apiVersion: '2015-03-31',
+      region: 'us-west-2',
+    })
+
+    let lambdaParams = {
+      FunctionName: process.env.MERGER_LAMBDA,
+      InvocationType: 'Event',
+      Payload: JSON.stringify({
+        'Records': [
+          {
+            's3': {
+              'bucket': {
+                'name': bucket,
+              },
+              'object': {
+                'key': jsonData.pdf_path,
+              },
+            },
+          },
+        ],
+      }),
+    }
+
+    await lambda.invoke(lambdaParams).promise()
+
     // Actualizo DynamoDB
-    
+
+    // noinspection SpellCheckingInspection
     const dynamodb = new AWS.DynamoDB({
       apiVersion: '2012-08-10',
       region: 'us-west-2',
@@ -117,6 +146,7 @@ module.exports.handler = async (event, context) => {
 
     await dynamodb.putItem(params).promise();
 
+    console.log(jsonData.pdf_path)
     result = jsonData.pdf_path;
 
     // Fin de la funcion
