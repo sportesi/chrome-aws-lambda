@@ -78,7 +78,7 @@ module.exports.handler = async (event, context) => {
     let ACQueueUrl = "https://sqs.us-west-2.amazonaws.com/730404845529/qa_account_status_pdf_queue";
 
     let ACQueueParams = {
-      MessageBody: message,
+      MessageBody: JSON.stringify(message),
       QueueUrl: ACQueueUrl,
       DelaySeconds: 0,
     };
