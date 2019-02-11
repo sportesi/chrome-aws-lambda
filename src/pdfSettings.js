@@ -9,7 +9,7 @@ module.exports.pdfSettings = {
         top: '30px',
         bottom: '60px',
         right: '30px',
-        left: '30px',
+        left: '40px',
     },
     headerTemplate,
     footerTemplate,

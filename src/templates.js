@@ -14,7 +14,7 @@ module.exports.footerTemplate = `
 `;
 
 module.exports.headerTemplate = `
-    <div style='transform: rotate(-90deg); font-family: helvetica; font-size: 7px; height: 500px; width: 520px;'>
+    <div style='transform: rotate(-90deg); font-family: helvetica; font-size: 7px; height: 500px; width: 530px;'>
         Procesado por <b>OCTOPUS</b> - 0800-362-OCTO (6286)
     </div>
 `;
