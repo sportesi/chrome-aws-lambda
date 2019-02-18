@@ -75,7 +75,7 @@ module.exports.handler = async (event, context) => {
 
     await s3.putObject(uploadedPdfParams).promise();
 
-    let ACQueueUrl = "https://sqs.us-west-2.amazonaws.com/730404845529/qa_account_status_pdf_queue";
+    let ACQueueUrl = "https://sqs.us-west-2.amazonaws.com/730404845529/prod_account_status_pdf_queue";
 
     let ACQueueParams = {
       MessageBody: JSON.stringify(message),
