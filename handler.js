@@ -75,6 +75,18 @@ module.exports.handler = async (event, context) => {
 
     await s3.putObject(uploadedPdfParams).promise();
 
+    if (jsonData.imprime) {
+      // Pongo en el S3 el PDF con la ruta del JSON
+
+      let uploadPrintParams = {
+        Body: fs.readFileSync('/tmp/expense.pdf'),
+        Bucket: bucket,
+        Key: jsonData.ruta_impresion
+      };
+
+      await s3.putObject(uploadPrintParams).promise();
+    }
+
     let ACQueueUrl = "https://sqs.us-west-2.amazonaws.com/730404845529/prod_account_status_pdf_queue";
 
     let ACQueueParams = {
