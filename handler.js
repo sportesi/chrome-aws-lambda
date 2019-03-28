@@ -67,10 +67,12 @@ module.exports.handler = async (event, context) => {
 
     // Pongo en el S3 el PDF con la ruta del JSON
 
+    let ruta_sin_prorrateo = jsonData.ruta  + '.sin-account-status.pdf';
+
     let uploadedPdfParams = {
       Body: fs.readFileSync('/tmp/expense.pdf'),
       Bucket: bucket,
-      Key: jsonData.ruta
+      Key: ruta_sin_prorrateo
     };
 
     await s3.putObject(uploadedPdfParams).promise();
@@ -84,9 +86,9 @@ module.exports.handler = async (event, context) => {
     await sqs.sendMessage(ACQueueParams).promise();
 
     // Dejo el console.log para que quede registro en CloudWatch
-    console.log(jsonData.ruta);
+    console.log(ruta_sin_prorrateo);
 
-    result = jsonData.ruta;
+    result = ruta_sin_prorrateo;
 
     // Fin de la funcion
 
