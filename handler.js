@@ -59,6 +59,10 @@ module.exports.handler = async (event, context) => {
 
     // Creo el pdf
 
+    if (!jsonData.leyenda_mis_expensas) {
+      pdfSettings.footerTemplate = '<html><p>&nbsp;</p></html>'
+    }
+
     await page.pdf(pdfSettings);
 
     // Mato el browser
