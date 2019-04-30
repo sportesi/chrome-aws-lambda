@@ -12,13 +12,11 @@ module.exports.handler = async (event, context) => {
   let result = null;
   let browser = null;
   
-  const message = JSON.parse(event.Records[0].body);
-  
   const s3 = new AWS.S3();
-  const sqs = new AWS.SQS({ apiVersion: '2012-11-05', region: 'us-west-2' });
+  const lambda = new AWS.Lambda({ apiVersion: '2015-03-31', region: 'us-west-2' });
   
-  const bucket = message.bucket;
-  const jsonPath = decodeURIComponent(message.ruta.replace(/\+/g, " "));
+  const bucket = event.Bucket;
+  const jsonPath = decodeURIComponent(event.Key.replace(/\+/g, " "));
 
   try {
 
@@ -81,13 +79,14 @@ module.exports.handler = async (event, context) => {
 
     await s3.putObject(uploadedPdfParams).promise();
 
-    let ACQueueParams = {
-      MessageBody: JSON.stringify(message),
-      QueueUrl: process.env['account_status_pdf_queue'],
-      DelaySeconds: 0,
+    let params = {
+        FunctionName: process.env['account_status_lambda'], 
+        InvocationType: "Event", 
+        LogType: "Tail",
+        Payload: Buffer.from(JSON.stringify(event), 'utf8'),
     };
 
-    await sqs.sendMessage(ACQueueParams).promise();
+    await lambda.invoke(params).promise();
 
     // Dejo el console.log para que quede registro en CloudWatch
     console.log(ruta_sin_prorrateo);
