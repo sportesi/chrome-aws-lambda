@@ -13,7 +13,6 @@ module.exports.handler = async (event, context) => {
   let browser = null;
   
   const s3 = new AWS.S3();
-  const lambda = new AWS.Lambda({ apiVersion: '2015-03-31', region: 'us-west-2' });
   
   const bucket = event.Bucket;
   const jsonPath = decodeURIComponent(event.Key.replace(/\+/g, " "));
@@ -21,7 +20,6 @@ module.exports.handler = async (event, context) => {
   try {
 
     // Traigo el json
-
     const jsonFileS3Params = {
       Bucket: bucket,
       Key: jsonPath
@@ -32,11 +30,9 @@ module.exports.handler = async (event, context) => {
     jsonData = JSON.parse(jsonData.Body.toString());
 
     // Traigo el html dentro del JSON
-
     let html = jsonData.html_expensa;
 
     // Invoco el browser
-
     browser = await puppeteer.launch({
       args: chromium.args,
       executablePath: await chromium.executablePath,
@@ -79,19 +75,7 @@ module.exports.handler = async (event, context) => {
 
     await s3.putObject(uploadedPdfParams).promise();
 
-    let params = {
-        FunctionName: process.env['account_status_lambda'], 
-        InvocationType: "Event", 
-        LogType: "Tail",
-        Payload: Buffer.from(JSON.stringify(event), 'utf8'),
-    };
-
-    await lambda.invoke(params).promise();
-
-    // Dejo el console.log para que quede registro en CloudWatch
-    console.log(ruta_sin_prorrateo);
-
-    result = ruta_sin_prorrateo;
+    result = { ruta_sin_prorrateo };
 
     // Fin de la funcion
 
@@ -103,5 +87,5 @@ module.exports.handler = async (event, context) => {
     }
   }
 
-  return context.succeed(result);
+  return Object.assign(event, result);
 };
